@@ -13,7 +13,7 @@ typedef struct{
 
 static cart_context ctx;
 
-static const char *const ROM_TYPES[256] = {
+static const char *const ROM_TYPES[] = {
     [0x00] = "ROM ONLY",
     [0x01] = "MBC1",
     [0x02] = "MBC1+RAM",
@@ -167,9 +167,9 @@ bool cart_loader(char *cart){
     checksum = checksum - ctx.rom_data[address] - 1;
     }
     if(checksum == ctx.header->checksum){
-        printf("\t Checksum    : %2.2X PASSED\n", ctx.header->checksum);
+        printf("\t Checksum    : %2.2X (PASSED)\n", ctx.header->checksum);
     }else{
-        printf("\t Checksum    : %2.2X FAILED\n", ctx.header->checksum);
+        printf("\t Checksum    : %2.2X (FAILED)\n", ctx.header->checksum);
 
     }
     
