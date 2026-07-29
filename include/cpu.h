@@ -1,6 +1,36 @@
 #pragma once
 
 #include <common.h>
+#include <instructions.h>
+
+typedef struct{
+    u8 a;
+    u8 f;
+    u8 b;
+    u8 c;
+    u8 d;
+    u8 e;
+    u8 h;
+    u8 l;
+    u16 SP;
+    u16 PC;
+
+} cpu_registers;
+
+typedef struct{
+
+    cpu_registers regs;
+
+    //current fetch
+    u16 fetch_data;
+    u16 mem_dest;
+    u8 cur_opcode;
+    instruction *cut_inst;
+
+    bool halted;
+    bool stepping;
+
+}cpu_context;
 
 void cpu_init();
 void cpu_step();
