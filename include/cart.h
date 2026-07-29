@@ -9,7 +9,6 @@ typedef struct{
     char title[16];
     u16 new_lic_codes;
     u8 sgb_flag;
-    u8 cgb_flag;
     u8 cart_type;
     u8 rom_size;
     u8 ram_size;
@@ -17,7 +16,7 @@ typedef struct{
     u8 old_lic_codes;
     u8 Mask_rom_ver;
     u8 checksum;
-    u8 global_checksum;
+    u16 global_checksum;
 
 
 }rom_header;

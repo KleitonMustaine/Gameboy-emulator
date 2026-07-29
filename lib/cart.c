@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <cart.h>
 #include <string.h>
+#include <stdlib.h>
 
 typedef struct{
     char filename[1024];
@@ -107,14 +108,13 @@ static const char *LIC_CODES[0xA5] = {
     [0xA4] = "Konami (Yu-Gi-Oh!)",
 };
 
-const char *cart_lic_name(){
-    if(ctx.header->new_lic_codes <= 0xA4){
-        return LIC_CODES[ctx.header->new_lic_codes];
+const char *cart_lic_name() {
+    if (ctx.header->new_lic_codes <= 0xA4) {
+        return LIC_CODES[ctx.header->old_lic_codes];
     }
-    else {
-        return "UNKNOWN";
-    }
+    return "UNKNOWN";
 }
+
 
 const char *cart_type_name(){
     if(ctx.header->cart_type <= 0x22){
@@ -125,32 +125,6 @@ const char *cart_type_name(){
     }
 }
 
-const char *cgb_flag(){
-    switch(ctx.header->cgb_flag){
-        case 0x80:
-            printf("CGB Compatible");
-        case 0xC0:
-            printf("CGB Only");
-        default:
-            printf("Can't see shit");
-    }
-}
-
-const char *sgb_flag(){
-    switch (ctx.header->sgb_flag){
-    case 0x03:
-        if(ctx.header->sgb_flag == 0x03){
-            printf("SGB Compatible");
-        }
-        else{
-            printf("Not compatible");
-        }
-        break;
-    
-    default:
-        break;
-    }
-}
 
 bool cart_loader(char *cart){
     strncpy(ctx.filename, cart, sizeof(ctx.filename));
@@ -173,14 +147,18 @@ bool cart_loader(char *cart){
     fclose(file);
 
     ctx.header = (rom_header *)(ctx.rom_data + 0x100);
+    u8 cgb = ctx.header->title[15];
     ctx.header->title[15] = 0;
 
+    
+
     printf("Catridge Loaded: \n");
-    printf("\t Title       : %s\n", ctx.header->cart_type, cart_type_name());
-    printf("\t Type        : %2.2X (%s)\n", ctx.header->cart_type);
-    printf("\t ROM Size    : %d KB\n", ctx.header->rom_size);
+    printf("\t Title       : %s\n", ctx.header->title);
+    printf("\t Type        : %2.2X (%s)\n", ctx.header->cart_type, cart_type_name());
+    printf("\t ROM Size    : %d KB\n", 32 << ctx.header->rom_size);
     printf("\t RAM Size    : %2.2X\n", ctx.header->ram_size);
-    printf("\t LIC Code    : %2.2X (%s)\n", ctx.header->new_lic_codes);
+    printf("\t LIC Code    : %2.2X (%s)\n", ctx.header->old_lic_codes, cart_lic_name());
+    printf("\t CGB_Flag    : %2.2X\n", cgb);
     printf("\t ROM Ver     : %2.2X\n", ctx.header->Mask_rom_ver);
 
     u8 checksum = 0;
@@ -188,6 +166,13 @@ bool cart_loader(char *cart){
     for (u16 address = 0x0134; address <= 0x014C; address++) {
     checksum = checksum - ctx.rom_data[address] - 1;
     }
+    if(checksum == ctx.header->checksum){
+        printf("\t Checksum    : %2.2X PASSED\n", ctx.header->checksum);
+    }else{
+        printf("\t Checksum    : %2.2X FAILED\n", ctx.header->checksum);
+
+    }
+    
 
     return true;
 }

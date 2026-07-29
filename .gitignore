@@ -1,1 +1,10 @@
 .claude/settings.json
+
+build/
+compile_commands.json
+.cache/
+
+*.exe
+*.o
+*.obj
+*.a
