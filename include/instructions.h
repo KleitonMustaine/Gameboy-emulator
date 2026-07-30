@@ -2,6 +2,16 @@
 
 #include <common.h>
 
+// Notacao dos modos (a tabela do gbdev.io usa a forma nova entre parenteses):
+//   R    registrador direto
+//   MR   Memory at Register - o registrador guarda um endereco: [HL], [BC]
+//   D8   dado imediato de 8 bits    (n8)
+//   D16  dado imediato de 16 bits   (n16, little-endian)
+//   A8   endereco 0xFF00+n, so LDH  (n8)
+//   A16  endereco absoluto          (a16)
+//   HLI  [HL+]   HLD  [HL-]
+//   IMP  sem operando
+// Nome = AM_<destino>_<origem>. Um pedaco so = um operando.
 typedef enum {
     AM_IMP,
     AM_R_D16,
@@ -110,3 +120,8 @@ typedef struct {
     u8 param;
 
 }instruction;
+
+char *inst_name(in_type t);
+char *reg_name(reg_type rt);
+void inst_coverage(void);
+instruction *instruction_by_opcode(u8 opcode);

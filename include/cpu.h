@@ -25,7 +25,7 @@ typedef struct{
     u16 fetch_data;
     u16 mem_dest;
     u8 cur_opcode;
-    instruction *cut_inst;
+    instruction *cur_inst;
 
     bool halted;
     bool stepping;
@@ -33,4 +33,4 @@ typedef struct{
 }cpu_context;
 
 void cpu_init();
-void cpu_step();
+bool cpu_step();

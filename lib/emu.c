@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <emu.h>
+#include <cart.h>
+#include <cpu.h>
+#include <instructions.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 
@@ -23,4 +26,39 @@ void delay(u32 ms){
 }
 
 int emu_run(int argc, char **argv){
+    
+    char *rom_path = (argc > 1) ? argv[1] : "Roms/dmg-acid2.gb";
+
+    if (!cart_loader(rom_path)) {
+        printf("Falha ao carregar a ROM: %s\n", rom_path);
+        return -1;
+    }
+    printf("ROM carregada com sucesso!\n");
+
+    SDL_Init(SDL_INIT_VIDEO);
+    TTF_Init();
+
+    inst_coverage();
+    cpu_init();
+
+    ctx.running = true;
+    ctx.paused = false;
+    ctx.ticks = 0;
+
+    while(ctx.running){
+        if(ctx.paused){
+            delay(10);
+            continue;
+        }
+        if(!cpu_step()){
+            printf("CPU travou\n");
+            return -3;
+        }
+        ctx.ticks++;
+    }
+    TTF_Quit();
+    SLD_Quit();
+    return 0;
+
+    return 0;
 }
