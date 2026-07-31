@@ -14,6 +14,8 @@ instruction instructions[0x100] = {
 
     [0xC3] = {IN_JP, AM_D16},
 
+    [0xCE] = {IN_ADC}
+
     [0x0B] = {IN_DEC, AM_MR, RT_BC}
 
 
@@ -39,10 +41,13 @@ char *inst_name(in_type t)  { return inst_lookup[t]; }
 char *reg_name(reg_type rt) { return rt_lookup[rt];  }
 
 instruction *instruction_by_opcode(u8 opcode) {
+    if(instructions[opcode].type == IN_NONE){
+        return NULL;
+    }
     return &instructions[opcode];
 }
 
-// os 11 opcodes que nao existem no hardware - travam a CPU de verdade
+// os 11 opcodes que nao existem no hardware travam a CPU de verdade
 static bool is_illegal(u8 op) {
     switch (op) {
         case 0xD3: case 0xDB: case 0xDD:
@@ -53,7 +58,7 @@ static bool is_illegal(u8 op) {
             return false;
     }
 }
-//   #  implementado    .  falta    x  invalido
+
 void inst_coverage(void) {
     int feitos = 0;
     int total  = 0;

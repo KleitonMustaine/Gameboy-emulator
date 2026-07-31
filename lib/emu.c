@@ -25,6 +25,10 @@ void delay(u32 ms){
     SDL_Delay(ms);
 }
 
+void emu_cycles(int cpu_cycles){
+    //TODO
+}
+
 int emu_run(int argc, char **argv){
     
     char *rom_path = (argc > 1) ? argv[1] : "Roms/dmg-acid2.gb";
@@ -57,7 +61,7 @@ int emu_run(int argc, char **argv){
         ctx.ticks++;
     }
     TTF_Quit();
-    SLD_Quit();
+    SDL_Quit();
     return 0;
 
     return 0;

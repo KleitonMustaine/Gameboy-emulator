@@ -24,6 +24,7 @@ typedef struct{
     //current fetch
     u16 fetch_data;
     u16 mem_dest;
+    bool dest_is_mem;
     u8 cur_opcode;
     instruction *cur_inst;
 
@@ -34,3 +35,4 @@ typedef struct{
 
 void cpu_init();
 bool cpu_step();
+u16 cpu_read_reg(reg_type rt);
