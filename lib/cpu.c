@@ -40,10 +40,11 @@ static void fetch_data(){
             return;
 
         case AM_D16:
-            u16 lo = bus_read(ctx.regs.PC +1);
+        case AM_R_D16:
+            u16 lo = bus_read(ctx.regs.PC);
             emu_cycles(1);
 
-            u16 hi = bus_read(ctx.regs.PC +1);
+            u16 hi = bus_read(ctx.regs.PC + 1);
             emu_cycles(1);
 
             ctx.fetch_data = lo | (hi << 8);
@@ -52,6 +53,13 @@ static void fetch_data(){
 
             return;
         
+        
+        case AM_R_MR:
+            ctx.fetch_data = bus_read(cpu_read_reg(ctx.cur_inst->reg_2));
+            emu_cycles(1);
+            return;
+
+
         default:
             printf("Unknown addressing mode! %d\n", ctx.cur_inst->mode);
             exit(-7);
@@ -60,11 +68,61 @@ static void fetch_data(){
 
 }
 static void execute(){
-    printf("Executing instruction: %02X    PC:  %04X\n", ctx.cur_opcode,ctx.regs.PC);
-    printf("SHIT");
+
+    switch (ctx.cur_inst->type){
+    case IN_LD:
+        if(ctx.dest_is_mem){
+            bus_write(ctx.mem_dest, ctx.fetch_data);
+        }else{
+            cpu_write_reg(ctx.cur_inst->reg_1, ctx.fetch_data);
+        }
+        return;
+    
+    case IN_NOP:
+        return;
+    
+    case IN_ADC:
+        u8 a = ctx.regs.a;
+        u8 n = ctx.fetch_data;
+        u8 carry_in = (ctx.regs.f & 0x10) ? 1 : 0;
+            
+        u16 result = (u16)a +(u16)n + carry_in;
+
+        bool z = ((u8)result) == 0;
+        bool n_flag = false;
+        bool h = ((a & 0xF) + (n & 0xF) + carry_in) > 0xF;
+        bool c = result > 0xFF;
+
+        return;
+
+    case IN_JP:
+        ctx.regs.PC = ctx.fetch_data;
+        emu_cycles(1);
+        return;
+
+    case IN_DI:
+        return;
+    
+    case IN_CALL:
+        ctx.regs.SP--;
+        bus_write(ctx.regs.SP, (ctx.regs.PC >> 8) &0xFF);
+        emu_cycles(1);
+
+        ctx.regs.SP--;
+        bus_write(ctx.regs.SP, ctx.regs.PC & 0xFF);
+        emu_cycles(1);
+
+        ctx.regs.PC = ctx.fetch_data;
+        emu_cycles(1);
+        return;
+    
+    default:
+            printf("Instrucao nao implementada no execute! %s\n", inst_name(ctx.cur_inst->type));
+            while(1) { delay(1000); }
+    }
+
+
 }
-
-
 
 bool cpu_step(){
 

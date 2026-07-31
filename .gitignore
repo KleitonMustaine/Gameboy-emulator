@@ -8,3 +8,5 @@ compile_commands.json
 *.o
 *.obj
 *.a
+run.bat
+Roms/Zelda.gb

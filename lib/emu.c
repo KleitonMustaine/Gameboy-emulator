@@ -3,6 +3,7 @@
 #include <cart.h>
 #include <cpu.h>
 #include <instructions.h>
+#include <ui.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 
@@ -31,7 +32,7 @@ void emu_cycles(int cpu_cycles){
 
 int emu_run(int argc, char **argv){
     
-    char *rom_path = (argc > 1) ? argv[1] : "Roms/dmg-acid2.gb";
+    char *rom_path = (argc > 1) ? argv[1] : "Roms/Zelda.gb";
 
     if (!cart_loader(rom_path)) {
         printf("Falha ao carregar a ROM: %s\n", rom_path);
@@ -41,6 +42,7 @@ int emu_run(int argc, char **argv){
 
     SDL_Init(SDL_INIT_VIDEO);
     TTF_Init();
+    ui_init();
 
     inst_coverage();
     cpu_init();
@@ -50,6 +52,8 @@ int emu_run(int argc, char **argv){
     ctx.ticks = 0;
 
     while(ctx.running){
+        ui_handle_events();
+
         if(ctx.paused){
             delay(10);
             continue;
