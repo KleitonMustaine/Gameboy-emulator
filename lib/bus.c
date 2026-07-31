@@ -14,11 +14,29 @@
 //0xFF80	FFFE	High RAM (HRAM)	
 //0xFFFF	FFFF	Interrupt Enable register (IE)
 
+static const char *bus_region(u16 address){
+    if (address < 0x4000) return "ROM bank 00";
+    if (address < 0x8000) return "ROM bank 01-NN";
+    if (address < 0xA000) return "VRAM";
+    if (address < 0xC000) return "External RAM (cart)";
+    if (address < 0xE000) return "WRAM";
+    if (address < 0xFE00) return "Echo RAM";
+    if (address < 0xFEA0) return "OAM";
+    if (address < 0xFF00) return "area proibida (FEA0-FEFF)";
+    if (address < 0xFF80) return "I/O Registers";
+    if (address < 0xFFFF) return "HRAM";
+    return "IE register";
+}
+
+#define BUS_TRACE_FMT "%04X: %7s (%02X)       -> %s\n"
+
 u8 bus_read(u16 address){
     if(address < 0x8000){
         return cart_read(address);
     }
-    NO_IMPL
+    u8 value = 0xFF; 
+    printf(BUS_TRACE_FMT, address, "RD", value, bus_region(address));
+    return value;
 }
 
 void bus_write(u16 address, u8 value){
@@ -27,5 +45,17 @@ void bus_write(u16 address, u8 value){
         cart_write(address, value);
         return;
     }
-    NO_IMPL
+    printf(BUS_TRACE_FMT, address, "WR", value, bus_region(address));
+}
+
+u16 bus_read16(u16 address){
+    u16 lo = bus_read(address);
+    u16 hi = bus_read(address + 1);
+
+    return lo | (hi << 8);
+}
+
+void bus_write16(u16 address, u16 value){
+    bus_write(address, value & 0xFF);
+    bus_write(address + 1, (value >> 8) & 0xFF);
 }

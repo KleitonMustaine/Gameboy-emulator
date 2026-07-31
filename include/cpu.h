@@ -31,9 +31,20 @@ typedef struct{
     bool halted;
     bool stepping;
 
+    bool int_master_enabled;   // IME
+
 }cpu_context;
 
 void cpu_init();
 bool cpu_step();
 u16 cpu_read_reg(reg_type rt);
 void cpu_write_reg(reg_type rt, u16 val);
+void fetch_data();
+
+
+typedef void(*IN_PROC)(cpu_context *);
+
+IN_PROC inst_get_processor(in_type type);
+
+#define CPU_FLAG_Z BIT(ctx->regs.f, 7)
+#define CPU_FLAG_C BIT(ctx->regs.f, 4)

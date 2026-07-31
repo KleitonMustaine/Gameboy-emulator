@@ -1,12 +1,23 @@
 {
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    // Precisa ser o cmake nativo do ucrt64. O de C:\msys64\usr\bin e' build MSYS/POSIX
+    // e interpreta "C:/..." como caminho relativo, quebrando o -S/-B do configure.
+    "cmake.cmakePath": "C:/msys64/ucrt64/bin/cmake.exe",
     "cmake.configureOnOpen": true,
     "cmake.environment": {
         "PATH": "C:\\msys64\\ucrt64\\bin;${env:PATH}"
     },
     "cmake.debugConfig": {
-        "miDebuggerPath": "C:\\msys64\\ucrt64\\bin\\gdb.exe",
+        "miDebuggerPath": "C:\\msys64\\mingw64\\bin\\gdb.exe",
         "externalConsole": true,
-        "cwd": "${workspaceFolder}"
+        "cwd": "${workspaceFolder}",
+        // O exe linka SDL2.dll/SDL2_ttf.dll de ucrt64\bin; sem isso o console
+        // externo abre e fecha na hora com "DLL not found".
+        "environment": [
+            {
+                "name": "PATH",
+                "value": "C:\\msys64\\ucrt64\\bin;${env:PATH}"
+            }
+        ]
     }
 }
