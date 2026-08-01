@@ -16,7 +16,7 @@ instruction instructions[0x100] = {
 
     [0xCE] = {IN_ADC, AM_R_D8, RT_A},
 
-    [0x0B] = {IN_DEC, AM_MR, RT_BC},
+    [0x0B] = {IN_DEC, AM_R, RT_BC},
 
     [0x66] = {IN_LD, AM_R_MR, RT_H, RT_HL},
 
@@ -28,8 +28,15 @@ instruction instructions[0x100] = {
 
     [0xCD] = {IN_CALL, AM_D16},
 
-    
+    [0x10] = {IN_STOP},
 
+    [0x57] = {IN_LD, AM_R_R, RT_D, RT_A},
+
+    [0x48] = {IN_LD, AM_R_R, RT_C, RT_B},
+
+    [0x4F] = {IN_LD, AM_R_R, RT_C, RT_C},
+
+    
 
 
 }; 

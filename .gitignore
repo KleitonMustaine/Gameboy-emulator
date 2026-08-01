@@ -10,3 +10,4 @@ compile_commands.json
 *.a
 run.bat
 Roms/Zelda.gb
+Roms/Tetris.gb
