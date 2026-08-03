@@ -5,6 +5,32 @@ instruction instructions[0x100] = {
     [0x00] = {IN_NOP, AM_IMP},
 
     [0x01] = {IN_LD, AM_R_D16, RT_BC},
+    [0xAF] = {IN_XOR, AM_R, RT_A},
+
+    //0x1X
+    [0x11] = {IN_LD, AM_R_D16, RT_DE},
+    [0x12] = {IN_LD, AM_MR_R, RT_DE, RT_A},
+    [0x15] = {IN_DEC, AM_R, RT_D},
+    [0x16] = {IN_LD, AM_R_D8, RT_D},
+    [0x1A] = {IN_LD, AM_R_MR, RT_A, RT_DE},
+    [0x1E] = {IN_LD, AM_R_D8, RT_E},
+
+    //0x2X
+    [0x21] = {IN_LD, AM_R_D16, RT_HL},
+    [0x22] = {IN_LD, AM_HLI_R, RT_HL, RT_A},
+    [0x25] = {IN_DEC, AM_R, RT_H},
+    [0x26] = {IN_LD, AM_R_D8, RT_H},
+    [0x2A] = {IN_LD, AM_R_HLI, RT_A, RT_HL},
+    [0x2E] = {IN_LD, AM_R_D8, RT_L},
+
+    //0x3X
+    [0x31] = {IN_LD, AM_R_D16, RT_SP},
+    [0x32] = {IN_LD, AM_HLD_R, RT_HL, RT_A},
+    [0x35] = {IN_DEC, AM_MR, RT_HL},
+    [0x36] = {IN_LD, AM_MR_D8, RT_HL},
+    [0x3A] = {IN_LD, AM_R_HLD, RT_A, RT_HL},
+    [0x3E] = {IN_LD, AM_R_D8, RT_A},
+
 
     [0x05] = {IN_DEC, AM_R, RT_B},
 
@@ -36,10 +62,65 @@ instruction instructions[0x100] = {
 
     [0x4F] = {IN_LD, AM_R_R, RT_C, RT_C},
 
+    //0xEX
+    [0xE2] = {IN_LD, AM_MR_R, RT_C, RT_A},
+    [0xEA] = {IN_LD, AM_A16_R, RT_NONE, RT_A},
+    [0xEE] = {IN_XOR, AM_D8, RT_A},
     
+    //0xFX
+    [0xF2] = {IN_LD, AM_R_MR, RT_A, RT_C},
+    [0xF3] = {IN_DI},
+    [0xFA] = {IN_LD, AM_R_A16, RT_A},
 
 
 }; 
+
+static const reg_type reg_lookup[8] = {
+    RT_B, RT_C, RT_D, RT_E, RT_H, RT_L, RT_HL, RT_A
+};
+
+void init_regular_inst(){
+
+    for(int op = 0x40; op <= 0x7F; op++){
+
+        if(op == 0x76){
+            instructions[op] = (instruction) {IN_HALT};
+            continue;
+        }
+        reg_type d = reg_lookup[(op >> 3) & 7];
+        reg_type s = reg_lookup[op & 7];
+        if(d == RT_HL){
+            instructions[op] = (instruction) {IN_LD, AM_MR_R, RT_HL, s};
+        }
+        else if(s == RT_HL){
+            instructions[op] = (instruction) {IN_LD, AM_R_MR, d, RT_HL};
+        }
+        else{
+            instructions[op] = (instruction) {IN_LD, AM_R_R, d, s};
+        }
+
+    }
+
+}
+
+static const in_type alu[8] = {
+    IN_ADD,IN_ADC,IN_SUB,IN_SBC,IN_AND,IN_XOR,IN_OR,IN_CP
+};
+
+void init_alu_inst(){
+
+    for(int op = 0x80; op <= 0xBF; op++){
+        in_type t = alu[(op >> 3) & 7];
+        reg_type s = reg_lookup[op & 7];
+
+        if(s == RT_HL){
+            instructions[op] = (instruction){t, AM_MR, RT_HL};
+        }else{
+            instructions[op] = (instruction){t, AM_R,  s};
+        }
+    }
+
+}
 
 static char *inst_lookup[] = {
     "<NONE>", "NOP",  "LD",   "INC",  "DEC",  "RLCA", "ADD",  "RRCA",

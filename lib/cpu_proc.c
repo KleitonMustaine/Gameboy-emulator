@@ -119,33 +119,54 @@ static void proc_add(cpu_context *ctx){
 }
 
 static void proc_adc(cpu_context *ctx){
-        u8 a = ctx->regs.a;
-        u8 n = ctx->fetch_data;
-        u8 carry_in = (ctx->regs.f & 0x10) ? 1 : 0;
+    u8 a = ctx->regs.a;
+    u8 n = ctx->fetch_data;
+    u8 carry_in = (ctx->regs.f & 0x10) ? 1 : 0;
             
-        u16 result = (u16)a +(u16)n + carry_in;
+    u16 result = (u16)a +(u16)n + carry_in;
 
-        bool z = ((u8)result) == 0;
-        bool n_flag = false;
-        bool h = ((a & 0xF) + (n & 0xF) + carry_in) > 0xF;
-        bool c = result > 0xFF;
-        ctx->regs.a = result;
-        cpu_set_flags(ctx, z, n_flag, h, c);
+    bool z = ((u8)result) == 0;
+    bool n_flag = false;
+    bool h = ((a & 0xF) + (n & 0xF) + carry_in) > 0xF;
+    bool c = result > 0xFF;
+    ctx->regs.a = result;
+    cpu_set_flags(ctx, z, n_flag, h, c);
 
-        return;
+    return;
+}
+
+static void proc_sbc(cpu_context *ctx){
+
+    u8 a = ctx->regs.a;
+    u8 n = ctx->fetch_data;
+    u8 carry_in = (ctx->regs.f & 0x10) ? 1 : 0;
+            
+    u16 result = (u16)a - (u16)n - carry_in;
+
+    bool z = ((u8)result) == 0;
+    bool n_flag = true;
+    bool h = ((a & 0xF) < (n & 0xF) + carry_in);
+    bool c = (u16)a < ((u16)n + carry_in);
+    ctx->regs.a = result;
+    cpu_set_flags(ctx, z, n_flag, h, c);
+
+    return;
+
 }
 
 static void proc_call(cpu_context *ctx){
-        ctx->regs.SP--;
-        bus_write(ctx->regs.SP, (ctx->regs.PC >> 8) &0xFF);
-        emu_cycles(1);
+     if(check_cond(ctx)){
+            ctx->regs.SP--;
+            bus_write(ctx->regs.SP, (ctx->regs.PC >> 8) &0xFF);
+            emu_cycles(1);
 
-        ctx->regs.SP--;
-        bus_write(ctx->regs.SP, ctx->regs.PC & 0xFF);
-        emu_cycles(1);
+            ctx->regs.SP--;
+            bus_write(ctx->regs.SP, ctx->regs.PC & 0xFF);
+            emu_cycles(1);
 
-        ctx->regs.PC = ctx->fetch_data;
-        emu_cycles(1);
+            ctx->regs.PC = ctx->fetch_data;
+            emu_cycles(1);
+        }
         return;
 }
 
@@ -163,6 +184,88 @@ static void proc_xor(cpu_context *ctx){
     cpu_set_flags(ctx, ctx->regs.a == 0, 0, 0, 0);
 }
 
+static void proc_and(cpu_context *ctx){
+    ctx->regs.a &= ctx->fetch_data & 0xFF;
+    cpu_set_flags(ctx, ctx->regs.a == 0, 0, 1, 0);
+}
+
+static void proc_halt(cpu_context *ctx){
+    ctx->halted = true;
+}
+
+static void proc_stop(cpu_context *ctx){
+    ctx->halted = true;
+}
+
+static void proc_sub(cpu_context *ctx){
+
+    reg_type rt = ctx->cur_inst->reg_1;
+    u16 cur = cpu_read_reg(rt);
+    u16 n = ctx->fetch_data;
+
+    u16 result;
+    char z, h, c;
+
+    result = cur - n;
+    z = (result & 0xFF) == 0;
+    h = (cur & 0xF)  < (n & 0xF);
+    c = (cur & 0xFF) < (n & 0xFF);
+
+    cpu_write_reg(rt, result);
+    cpu_set_flags(ctx, z, 1, h, c);
+
+}
+
+static void proc_or(cpu_context *ctx){
+    ctx->regs.a |= ctx->fetch_data & 0xFF;
+    cpu_set_flags(ctx, ctx->regs.a == 0, 0, 0, 0);
+}
+
+static void proc_inc(cpu_context *ctx){
+    u16 val = (ctx->dest_is_mem ? ctx->fetch_data : cpu_read_reg(ctx->cur_inst->reg_1)) + 1;
+
+    if(!ctx->dest_is_mem && ctx->cur_inst->reg_1 >= RT_AF){
+        emu_cycles(1);
+    }
+
+    if(ctx->dest_is_mem){
+        val &= 0xFF;
+        bus_write(ctx->mem_dest, val);
+        emu_cycles(1);
+    }else{
+        cpu_write_reg(ctx->cur_inst->reg_1, val);
+    }
+
+    if((ctx->cur_opcode & 0x03) == 0x3){
+        return;
+    }
+
+    cpu_set_flags(ctx, val == 0, 0, (val & 0x0F) == 0, -1);
+}
+
+static void proc_dec(cpu_context *ctx){
+
+    u16 val = (ctx->dest_is_mem ? ctx->fetch_data : cpu_read_reg(ctx->cur_inst->reg_1)) - 1;
+
+    if(!ctx->dest_is_mem && ctx->cur_inst->reg_1 >= RT_AF){
+        emu_cycles(1);
+    }
+
+    if(ctx->dest_is_mem){
+        val &= 0xFF;
+        bus_write(ctx->mem_dest, val);
+        emu_cycles(1);
+    }else{
+        cpu_write_reg(ctx->cur_inst->reg_1, val);
+    }
+
+    if((ctx->cur_opcode & 0x0B) == 0xB){
+        return;
+    }
+
+    cpu_set_flags(ctx, val == 0, 1, (val & 0x0F) == 0x0F, -1);
+
+}
 
 static IN_PROC processors[]= {
 
@@ -175,7 +278,14 @@ static IN_PROC processors[]= {
     [IN_DI] = proc_di,
     [IN_NOP] = proc_nop,
     [IN_XOR] = proc_xor,
-
+    [IN_AND] = proc_and,
+    [IN_HALT] = proc_halt,
+    [IN_STOP] = proc_halt,
+    [IN_SUB] = proc_sub,
+    [IN_OR] = proc_or,
+    [IN_SBC] = proc_sbc,
+    [IN_INC] = proc_inc,
+    [IN_DEC] = proc_dec,
 };
 
 

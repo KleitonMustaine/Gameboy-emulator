@@ -44,6 +44,8 @@ int emu_run(int argc, char **argv){
     TTF_Init();
     ui_init();
 
+    init_regular_inst();
+    init_alu_inst();
     inst_coverage();
     cpu_init();
 

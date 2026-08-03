@@ -125,3 +125,5 @@ char *inst_name(in_type t);
 char *reg_name(reg_type rt);
 void inst_coverage(void);
 instruction *instruction_by_opcode(u8 opcode);
+void init_regular_inst();
+void init_alu_inst();
