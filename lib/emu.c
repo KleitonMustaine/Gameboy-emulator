@@ -32,7 +32,7 @@ void emu_cycles(int cpu_cycles){
 
 int emu_run(int argc, char **argv){
     
-    char *rom_path = (argc > 1) ? argv[1] : "Roms/Tetris.gb";
+    char *rom_path = (argc > 1) ? argv[1] : "Roms/dmg-acid2.gb";
 
     if (!cart_loader(rom_path)) {
         printf("Falha ao carregar a ROM: %s\n", rom_path);

@@ -52,6 +52,13 @@ static void proc_jp(cpu_context *ctx){
     }
 }
 
+static void proc_jr(cpu_context *ctx){
+    if(check_cond(ctx)){
+        ctx->regs.PC += (int8_t)ctx->fetch_data;
+        emu_cycles(1);
+    }
+}
+
 static void proc_ld(cpu_context *ctx){
         if(ctx->dest_is_mem){
             
@@ -240,7 +247,9 @@ static void proc_inc(cpu_context *ctx){
         return;
     }
 
-    cpu_set_flags(ctx, val == 0, 0, (val & 0x0F) == 0, -1);
+    // val e u16 e nao foi mascarado no caminho do registrador: INC B com
+    // B=0xFF da 0x100, e "val == 0" daria falso com o resultado sendo zero.
+    cpu_set_flags(ctx, (val & 0xFF) == 0, 0, (val & 0x0F) == 0, -1);
 }
 
 static void proc_dec(cpu_context *ctx){
@@ -272,6 +281,7 @@ static IN_PROC processors[]= {
     [IN_NONE] = proc_none,
     [IN_LD] = proc_ld,
     [IN_JP] = proc_jp,
+    [IN_JR] = proc_jr,
     [IN_ADD] = proc_add,
     [IN_ADC] = proc_adc,
     [IN_CALL] = proc_call,
@@ -286,6 +296,7 @@ static IN_PROC processors[]= {
     [IN_SBC] = proc_sbc,
     [IN_INC] = proc_inc,
     [IN_DEC] = proc_dec,
+
 };
 
 

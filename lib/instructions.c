@@ -3,9 +3,10 @@
 
 instruction instructions[0x100] = {
     [0x00] = {IN_NOP, AM_IMP},
-
     [0x01] = {IN_LD, AM_R_D16, RT_BC},
+    [0x06] = {IN_LD, AM_R_D8, RT_B},
     [0xAF] = {IN_XOR, AM_R, RT_A},
+
 
     //0x1X
     [0x11] = {IN_LD, AM_R_D16, RT_DE},
@@ -16,13 +17,22 @@ instruction instructions[0x100] = {
     [0x1E] = {IN_LD, AM_R_D8, RT_E},
 
     //0x2X
+    [0x20] = {IN_JR, AM_D8, RT_NONE, RT_NONE, CT_NZ},
     [0x21] = {IN_LD, AM_R_D16, RT_HL},
     [0x22] = {IN_LD, AM_HLI_R, RT_HL, RT_A},
+    [0x23] = {IN_INC, AM_R, RT_HL},
+    [0x24] = {IN_INC, AM_R, RT_H},
     [0x25] = {IN_DEC, AM_R, RT_H},
     [0x26] = {IN_LD, AM_R_D8, RT_H},
+    [0x27] = {IN_DAA},
+    [0x28] = {IN_JR, AM_D8, RT_NONE, RT_NONE, CT_Z},
+    [0x29] = {IN_ADD, AM_R_R, RT_HL, RT_HL},
     [0x2A] = {IN_LD, AM_R_HLI, RT_A, RT_HL},
+    [0x2B] = {IN_DEC, AM_R, RT_HL},
+    [0x2C] = {IN_INC, AM_R, RT_L},
+    [0x2D] = {IN_DEC, AM_R, RT_L},
     [0x2E] = {IN_LD, AM_R_D8, RT_L},
-
+    [0x2F] = {IN_CPL},
     //0x3X
     [0x31] = {IN_LD, AM_R_D16, RT_SP},
     [0x32] = {IN_LD, AM_HLD_R, RT_HL, RT_A},
@@ -112,11 +122,10 @@ void init_alu_inst(){
     for(int op = 0x80; op <= 0xBF; op++){
         in_type t = alu[(op >> 3) & 7];
         reg_type s = reg_lookup[op & 7];
-
         if(s == RT_HL){
-            instructions[op] = (instruction){t, AM_MR, RT_HL};
+            instructions[op] = (instruction){t, AM_R_MR, RT_A, RT_HL};
         }else{
-            instructions[op] = (instruction){t, AM_R,  s};
+            instructions[op] = (instruction){t, AM_R_R,  RT_A, s};
         }
     }
 
@@ -159,21 +168,30 @@ static bool is_illegal(u8 op) {
     }
 }
 
+// nenhum mnemonico passa de 4 chars (RLCA, SWAP, JPHL...), entao celulas
+// de 5 sempre deixam pelo menos um espaco entre colunas
+#define CELL "%-5s"
+
 void inst_coverage(void) {
     int feitos = 0;
     int total  = 0;
 
-    printf("\n== cobertura de opcodes ==\n");
-    printf("    0 1 2 3 4 5 6 7 8 9 A B C D E F\n");
+    printf("\n== cobertura de opcodes ==\n\n");
+
+    printf("     ");
+    for (int lo = 0; lo < 16; lo++) {
+        printf("%-5X", lo);
+    }
+    printf("\n");
 
     for (int hi = 0; hi < 16; hi++) {
-        printf("%X_  ", hi);
+        printf("%X_   ", hi);
 
         for (int lo = 0; lo < 16; lo++) {
             u8 op = (hi << 4) | lo;
 
             if (is_illegal(op)) {
-                printf("x ");
+                printf(CELL, "--");
                 continue;
             }
 
@@ -181,9 +199,9 @@ void inst_coverage(void) {
 
             if (instructions[op].type != IN_NONE) {
                 feitos++;
-                printf("# ");
+                printf(CELL, inst_name(instructions[op].type));
             } else {
-                printf(". ");
+                printf(CELL, ".");
             }
         }
 
