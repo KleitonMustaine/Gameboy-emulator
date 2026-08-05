@@ -15,15 +15,19 @@
 //0xFFFF	FFFF	Interrupt Enable register (IE)
 
 static const char *bus_region(u16 address){
-    if (address < 0x4000) return "ROM bank 00";
-    if (address < 0x8000) return "ROM bank 01-NN";
-    if (address < 0xA000) return "VRAM";
-    if (address < 0xC000) return "External RAM (cart)";
-    if (address < 0xE000) return "WRAM";
-    if (address < 0xFE00) return "Echo RAM";
-    if (address < 0xFEA0) return "OAM";
-    if (address < 0xFF00) return "area proibida (FEA0-FEFF)";
-    if (address < 0xFF80) return "I/O Registers";
+    //ROM Data
+    if (address < 0x4000) return cart_read(address);
+    if (address < 0x8000) return cart_read(address);
+    //Char/Map Data
+    if (address < 0xA000) return cart_read(address);
+    if (address < 0xC000) return cart_read(address);
+    //WRA< (Work RAM)
+    if (address < 0xE000) return cart_read(address);
+    //Echo RAM
+    if (address < 0xFE00) return cart_read(address);
+    if (address < 0xFEA0) return cart_read(address);
+    if (address < 0xFF00) return cart_read(address);
+    if (address < 0xFF80) return cart_read(address);
     if (address < 0xFFFF) return "HRAM";
     return "IE register";
 }
